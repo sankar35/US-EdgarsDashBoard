@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}{{ ov.company.ticker }} — EdgarDash{% endblock %}
+{% block content %}
+<h1>{{ ov.company.ticker }} <span class="muted">{{ ov.company.name }}</span></h1>
+<p class="muted">
+  CIK {{ ov.company.cik }} ·
+  {% if ov.company.sic %}SIC {{ ov.company.sic }} ({{ ov.company.sic_description or "n/a" }}) ·{% endif %}
+  {{ ov.company.exchange or "" }} ·
+  {% if ov.price %}Price {{ ov.price|money }} ({{ ov.price_date }}){% else %}price n/a{% endif %}
+</p>
+
+{% for f in flags %}
+<span class="flag {{ f.direction }}">{{ f.headline }}</span>
+{% endfor %}
+
+<h2>Score: {{ ov.score.total }}/{{ ov.score.max }}</h2>
+<div class="scorebar"><div style="width: {{ ov.score.total }}%"></div></div>
+{% for b in ov.score.breakdown %}
+<div class="rule">
+  <div class="head"><span>{{ b.name }}</span><span>{{ b.earned }}/{{ b.weight }}</span></div>
+  <div class="desc">{{ b.description }}</div>
+  <div class="detail">{{ b.detail }}</div>
+</div>
+{% endfor %}
+
+<h2>Fundamentals (TTM)</h2>
+<div class="cards">
+  <div class="card"><div class="label">Revenue</div><div class="value">{{ ov.metrics.ttm_revenue|money }}</div><div class="muted">{{ ov.metrics.revenue_yoy|pct }} YoY</div></div>
+  <div class="card"><div class="label">Net income</div><div class="value">{{ ov.metrics.ttm_net_income|money }}</div><div class="muted">{{ ov.metrics.net_income_yoy|pct }} YoY</div></div>
+  <div class="card"><div class="label">Op. cash flow</div><div class="value">{{ ov.metrics.ttm_ocf|money }}</div></div>
+  <div class="card"><div class="label">Free cash flow</div><div class="value">{{ ov.metrics.ttm_fcf|money }}</div><div class="muted">{{ ov.metrics.fcf_yoy|pct }} YoY</div></div>
+  <div class="card"><div class="label">Gross margin</div><div class="value">{{ ov.metrics.gross_margin|pct }}</div></div>
+  <div class="card"><div class="label">Net margin</div><div class="value">{{ ov.metrics.net_margin|pct }}</div></div>
+  <div class="card"><div class="label">Debt / equity</div><div class="value">{{ ov.metrics.debt_to_equity|num }}</div></div>
+  <div class="card"><div class="label">Share dilution YoY</div><div class="value">{{ ov.metrics.shares_yoy|pct }}</div></div>
+</div>
+
+<h2>Valuation</h2>
+<div class="cards">
+  <div class="card"><div class="label">Market cap</div><div class="value">{{ ov.valuation.market_cap|money }}</div></div>
+  <div class="card"><div class="label">Enterprise value</div><div class="value">{{ ov.valuation.enterprise_value|money }}</div></div>
+  <div class="card"><div class="label">P/E (TTM)</div><div class="value">{{ ov.valuation.pe|num }}</div></div>
+  <div class="card"><div class="label">P/S (TTM)</div><div class="value">{{ ov.valuation.ps|num }}</div></div>
+  <div class="card"><div class="label">EV/EBITDA</div><div class="value">{{ ov.valuation.ev_ebitda|num }}</div></div>
+  <div class="card"><div class="label">FCF yield</div><div class="value">{{ ov.valuation.fcf_yield|pct }}</div></div>
+</div>
+<p class="muted">EBITDA ≈ TTM operating income + depreciation. Multiples show n/a when inputs are missing.</p>
+
+<div class="grid2">
+<div>
+<h2>Industry peers {% if peers.sic_description %}({{ peers.sic_description }}){% endif %}</h2>
+{% if peers.peers %}
+<table>
+  <thead><tr><th>Ticker</th><th>Score</th><th>P/E</th><th>Rev YoY</th><th>Mkt cap</th></tr></thead>
+  <tbody>
+  {% for p in peers.peers %}
+  <tr><td><a href="/company/{{ p.ticker }}">{{ p.ticker }}</a></td><td>{{ p.score }}</td>
+      <td>{{ p.pe|num }}</td><td>{{ p.revenue_yoy|pct }}</td><td>{{ p.market_cap|money }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+<p class="muted">Peer medians — score {{ peers.median_score|num(0) }}, P/E {{ peers.median_pe|num }}, revenue YoY {{ peers.median_revenue_yoy|pct }}.</p>
+{% else %}
+<p class="muted">No ingested peers share this SIC code yet. Ingest more tickers to compare.</p>
+{% endif %}
+</div>
+<div>
+<h2>Recent filings</h2>
+<table>
+  <thead><tr><th>Form</th><th>Date</th><th>Document</th></tr></thead>
+  <tbody>
+  {% for f in filings %}
+  <tr><td><strong>{{ f.form }}</strong></td><td>{{ f.filing_date }}</td>
+      <td><a href="{{ f.url }}" target="_blank" rel="noopener">{{ f.primary_doc or f.accession }}</a></td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+</div>
+{% endblock %}

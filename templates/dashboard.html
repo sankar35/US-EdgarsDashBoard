@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — EdgarDash{% endblock %}
+{% block content %}
+<h1>Watchlist dashboard</h1>
+<p class="muted">{{ today }} · Scores are 0–100 rule-based (see any company page for the breakdown).</p>
+
+{% if not rows %}
+<p>No companies on the watchlist yet. Add a ticker above, then run
+<code>python scripts/ingest_watchlist.py --tickers AAPL</code> to pull its EDGAR data.</p>
+{% else %}
+<table>
+  <thead><tr>
+    <th>Ticker</th><th>Price</th><th>Score</th><th>TTM revenue</th><th>Rev YoY</th>
+    <th>P/E</th><th>FCF yield</th><th>Flags</th><th></th>
+  </tr></thead>
+  <tbody>
+  {% for r in rows %}
+    {% if r.missing %}
+    <tr><td><strong>{{ r.ticker }}</strong></td><td colspan="7" class="muted">not ingested yet — run the ingest script</td>
+      <td><form class="inline-form" action="/watchlist/{{ r.ticker }}/delete" method="post"><button>✕</button></form></td></tr>
+    {% else %}
+    <tr>
+      <td><a href="/company/{{ r.ticker }}"><strong>{{ r.ticker }}</strong></a><br><span class="muted">{{ r.name }}</span></td>
+      <td>{{ r.price|money }}</td>
+      <td><strong>{{ r.score }}</strong>/100</td>
+      <td>{{ r.metrics.ttm_revenue|money }}</td>
+      <td class="{{ 'pos' if r.metrics.revenue_yoy and r.metrics.revenue_yoy > 0 else 'neg' }}">{{ r.metrics.revenue_yoy|pct }}</td>
+      <td>{{ r.valuation.pe|num }}</td>
+      <td>{{ r.valuation.fcf_yield|pct }}</td>
+      <td>{% for f in r.flags %}<span class="flag">{{ f }}</span>{% endfor %}</td>
+      <td><form class="inline-form" action="/watchlist/{{ r.ticker }}/delete" method="post"><button title="Remove">✕</button></form></td>
+    </tr>
+    {% endif %}
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

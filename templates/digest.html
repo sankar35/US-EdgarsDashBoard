@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>EdgarDash daily digest — {{ date }}</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 860px; margin: 0 auto; padding: 1rem; color: #1a1a1a; }
+  h1 { font-size: 1.4rem; } h2 { font-size: 1.15rem; border-bottom: 1px solid #ddd; padding-bottom: 0.3rem; }
+  .co { border: 1px solid #ddd; border-radius: 8px; padding: 0.8rem 1rem; margin-bottom: 1rem; }
+  .flag { display: inline-block; background: #fff7e6; border: 1px solid #e6c87a; border-radius: 6px;
+    padding: 0.15rem 0.5rem; font-size: 0.85rem; margin: 0.15rem 0.25rem 0.15rem 0; }
+  .muted { color: #666; } .pos { color: #0a7a2f; } .neg { color: #b00020; }
+  .k8 { background: #f7f7f7; border-radius: 8px; padding: 0.8rem 1rem; margin-bottom: 1rem; }
+  table { border-collapse: collapse; } td, th { padding: 0.25rem 0.6rem; text-align: left; font-size: 0.9rem; }
+  footer { margin-top: 2rem; font-size: 0.8rem; color: #888; }
+</style>
+</head>
+<body>
+<h1>📊 EdgarDash daily digest — {{ date }}</h1>
+<p class="muted">Generated {{ generated_at }} · Data: SEC EDGAR + Stooq · Not investment advice.</p>
+
+<h2>Watchlist</h2>
+{% for c in companies %}
+<div class="co">
+  <h3>{{ c.ticker }} — {{ c.name }}
+    <span class="muted">score {{ c.score.total }}/100
+    {% if c.score_delta %} (<span class="{{ 'pos' if c.score_delta > 0 else 'neg' }}">{{ "%+.0f"|format(c.score_delta) }}</span> vs prior){% endif %}
+    {% if c.price %} · ${{ "%.2f"|format(c.price) }}{% endif %}</span>
+  </h3>
+  {% for f in c.changes %}<span class="flag">{{ f.headline }}</span>{% endfor %}
+  {% if c.new_filings %}
+  <table>
+    {% for f in c.new_filings %}
+    <tr><td><strong>{{ f.form }}</strong></td><td>{{ f.filing_date }}</td>
+        <td><a href="{{ f.url }}">{{ f.url.split('/')[-1] }}</a></td></tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p class="muted">No new filings since last digest.</p>
+  {% endif %}
+</div>
+{% endfor %}
+{% if not companies %}<p class="muted">Watchlist is empty.</p>{% endif %}
+
+<h2>8-K summaries</h2>
+{% for k in eight_ks %}
+<div class="k8">
+  <strong>{{ k.ticker }}</strong> <span class="muted">{{ k.filing_date }} · <a href="{{ k.url }}">filing</a></span>
+  <p>{{ k.summary }}</p>
+</div>
+{% endfor %}
+{% if not eight_ks %}<p class="muted">No new 8-Ks summarized today.</p>{% endif %}
+
+<footer>EdgarDash · rule-based scores from EDGAR companyfacts · prices delayed (Stooq).</footer>
+</body>
+</html>
